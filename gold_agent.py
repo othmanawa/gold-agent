@@ -21,7 +21,7 @@ def home():
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    data = request.json
+    data = request.get_json(silent=True) or request.form.to_dict() or {"raw": request.data.decode("utf-8")}
 
     prompt = f"""
 Tu es mon analyste professionnel spécialisé XAUUSD Gold en M5.
