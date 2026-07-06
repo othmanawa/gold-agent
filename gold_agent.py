@@ -1,7 +1,8 @@
 from flask import Flask, request
 from openai import OpenAI
 from dotenv import load_dotenv
-import os, requests, json
+import os, requests, json, csv
+from datetime import datetime
 
 load_dotenv()
 
@@ -10,6 +11,22 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+
+def log_signal(data, message):
+    file_exists = os.path.exists("trades_log.csv")
+    with open("trades_log.csv", "a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(["time", "symbol", "timeframe", "action", "close", "message"])
+        writer.writerow([
+            datetime.utcnow().isoformat(),
+            data.get("symbol", ""),
+            data.get("timeframe", ""),
+            data.get("action", ""),
+            data.get("close", ""),
+            message.replace("\n", " | ")
+        ])
 
 def send_telegram(text):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
@@ -68,6 +85,7 @@ Raison :
     )
 
     message = response.output_text
+    log_signal(data, message)
     send_telegram(message)
 
     return {"status": "ok"}
