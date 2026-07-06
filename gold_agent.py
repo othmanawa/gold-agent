@@ -20,22 +20,37 @@ def home():
     return "Gold Agent actif ✅"
 
 @app.route("/webhook", methods=["POST"])
-def webhook():
+def webhook():   
     data = request.get_json(silent=True) or request.form.to_dict() or {"raw": request.data.decode("utf-8")}
+    print("TRADINGVIEW DATA:", data, flush=True)
 
     prompt = f"""
-Tu es mon analyste professionnel spécialisé XAUUSD Gold en M5.
+Tu es Gold Agent, analyste professionnel spécialisé sur XAUUSD M5.
 
-Analyse uniquement ces données TradingView :
+Analyse uniquement les données TradingView suivantes :
+
 {json.dumps(data, indent=2)}
 
-Si le signal est insuffisant, réponds : Aucun trade à prendre actuellement.
+Mission :
 
-Réponds exactement dans ce format :
+- Analyse la tendance.
+- Vérifie la cohérence entre EMA20, EMA50, RSI et ATR.
+- Ne propose un trade que s'il présente un véritable avantage.
+- Si le marché est en range ou le signal est faible, réponds ATTENDRE ou AUCUN TRADE.
+- Ne force jamais une position.
+
+Attribue une confiance sur 10 :
+
+9-10 = Setup exceptionnel
+8 = Très bon setup
+7 = Correct mais prudence
+6 ou moins = Pas de trade
+
+Réponds exactement sous ce format :
 
 XAUUSD M5
 
-Action : ACHAT / VENTE / ATTENDRE / AUCUN TRADE
+Action :
 Entrée :
 Stop Loss :
 TP1 :
@@ -45,6 +60,7 @@ Confiance /10 :
 Risque :
 Raison :
 """
+
 
     response = client.responses.create(
         model="gpt-4.1-mini",
